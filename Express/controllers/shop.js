@@ -3,7 +3,7 @@ const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
     Product.findAll()
-        .then(products => {
+        .then((products) => {
             res.render('shop/product-list', {
                 prods: products,
                 pageTitle: 'All Products',
@@ -16,7 +16,7 @@ exports.getProducts = (req, res, next) => {
 exports.getProduct = (req, res, next) => {
     const prodId = req.params.productId;
     Product.findByPk(prodId)
-        .then(product => {
+        .then((product) => {
             res.render('shop/product-detail', {
                 product,
                 pageTitle: product.title,
@@ -28,7 +28,7 @@ exports.getProduct = (req, res, next) => {
 
 exports.getIndex = (req, res, next) => {
     Product.findAll()
-        .then(products => {
+        .then((products) => {
             res.render('shop/index', {
                 prods: products,
                 pageTitle: 'Shop',
@@ -39,27 +39,23 @@ exports.getIndex = (req, res, next) => {
 };
 
 exports.getCart = (req, res, next) => {
-    Cart.getProducts((cart) => {
-        const cartProducts = [];
-        Product.fetchAll((products) => {
-            products.forEach((product) => {
-                const cartProductData = cart.products.find(
-                    (prod) => prod.id === product.id
-                );
-                if (cartProductData) {
-                    cartProducts.push({
-                        productData: product,
-                        qty: cartProductData.qty
+    req.user
+        .getCart()
+        .then((cart) => {
+            return cart
+                .getProducts()
+                .then((products) => {
+                    res.render('shop/cart', {
+                        pageTitle: 'Your Cart',
+                        path: '/cart',
+                        products
                     });
-                }
-            });
-            res.render('shop/cart', {
-                pageTitle: 'Your Cart',
-                path: '/cart',
-                products: cartProducts
-            });
+                })
+                .catch((err) => console.log(err));
+        })
+        .catch((err) => {
+            console.log(err);
         });
-    });
 };
 
 exports.postCart = (req, res, next) => {
