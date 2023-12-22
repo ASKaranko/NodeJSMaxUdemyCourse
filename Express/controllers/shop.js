@@ -58,12 +58,27 @@ exports.getCart = (req, res, next) => {
         });
 };
 
-exports.postCart = (req, res, next) => {
+exports.postCart = async (req, res, next) => {
     const prodId = req.body.productId;
-    Product.findById(prodId, (product) => {
-        Cart.addProduct(prodId, product.price);
-    });
-    res.redirect('/cart');
+    try {
+        const cart = await req.user.getCart();
+        const products = await cart.getProducts({ where: { id: prodId } });
+        let product;
+        if (products?.length > 0) {
+            product = products[0];
+        }
+        let newQuantity = 1;
+        if (product) {
+            const oldQuantity = product.cartItem.quantity;
+            newQuantity = oldQuantity + 1;
+        } else {
+            product = await Product.findByPk(prodId);
+        }
+        await cart.addProduct(product, { through: { quantity: newQuantity } });
+        res.redirect('/cart');
+    } catch (err) {
+        console.log(err);
+    }
 };
 
 exports.postCartDeleteProduct = (req, res, next) => {

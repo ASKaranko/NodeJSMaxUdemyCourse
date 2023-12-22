@@ -40,8 +40,8 @@ Cart.belongsToMany(Product, { through: CartItem });
 Product.belongsToMany(Cart, { through: CartItem });
 
 sequelize
-    .sync({ force: true }) //will create a new tables, event if they are already exist
-    //.sync()
+    //.sync({ force: true }) //will create a new tables, event if they are already exist
+    .sync()
     .then((result) => {
         return User.findByPk(1);
     })
