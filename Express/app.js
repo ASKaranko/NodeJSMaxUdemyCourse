@@ -4,7 +4,9 @@ const sequelize = require('./util/database');
 const Product = require('./models/product');
 const User = require('./models/user');
 const Cart = require('./models/cart');
+const Order = require('./models/order');
 const CartItem = require('./models/cart-item');
+const OrderItem = require('./models/order-item');
 
 const errorController = require('./controllers/error');
 const adminRoutes = require('./routes/admin');
@@ -38,6 +40,10 @@ User.hasOne(Cart);
 Cart.belongsTo(User);
 Cart.belongsToMany(Product, { through: CartItem });
 Product.belongsToMany(Cart, { through: CartItem });
+Order.belongsTo(User);
+User.hasMany(Order);
+Order.belongsToMany(Product, { through: OrderItem });
+Product.belongsToMany(Order, { through: OrderItem });
 
 sequelize
     //.sync({ force: true }) //will create a new tables, event if they are already exist
@@ -54,11 +60,11 @@ sequelize
         }
         return user;
     })
-    .then(async user => {
+    .then(async (user) => {
         const cart = await user.getCart();
-        return {user, cart};
+        return { user, cart };
     })
-    .then(({user, cart}) => {
+    .then(({ user, cart }) => {
         if (!cart) {
             return user.createCart();
         }
