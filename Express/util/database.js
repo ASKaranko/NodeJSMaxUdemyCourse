@@ -1,8 +1,28 @@
-const { Sequelize } = require('sequelize');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
-const sequelize = new Sequelize('node', 'root', 'p9oqzjTeWQJpkw', {
-    dialect: 'mysql',
-    host: 'localhost'
+const url =
+    'mongodb+srv://akaranko:8LwpEIdvMJarQsLM@cluster0.zrmnklw.mongodb.net/?retryWrites=true&w=majority';
+
+const client = new MongoClient(url, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true
+    }
 });
 
-module.exports = sequelize;
+async function connect() {
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        return await client.connect();
+        // Send a ping to confirm a successful connection
+        //await client.db('admin').command({ ping: 1 });
+        // console.log(
+        //     'Pinged your deployment. You successfully connected to MongoDB!'
+        // );
+    } catch (err) {
+        console.dir(err);
+    }
+}
+
+module.exports = connect;
