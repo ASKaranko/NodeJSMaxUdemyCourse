@@ -1,9 +1,9 @@
 const express = require('express');
 const path = require('path');
-const connectToDB = require('./util/database');
+const { connect } = require('./util/database');
 
 const errorController = require('./controllers/error');
-// const adminRoutes = require('./routes/admin');
+const adminRoutes = require('./routes/admin');
 // const shopRoutes = require('./routes/shop');
 const bodyParser = require('body-parser');
 
@@ -22,16 +22,15 @@ app.use((req, res, next) => {
     //         next();
     //     })
     //     .catch((err) => console.log(err));
+    next();
 });
 
-// app.use('/admin', adminRoutes);
+app.use('/admin', adminRoutes);
 // app.use(shopRoutes);
 app.use(errorController.get404);
 
 const createMondoDBconnection = async () => {
-    const client = await connectToDB();
-    console.log('Connected to MondoDB');
-    console.log('client', client);
+    await connect();
     app.listen(3000);
 };
 

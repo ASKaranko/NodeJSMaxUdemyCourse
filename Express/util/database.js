@@ -1,7 +1,9 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const url =
-    'mongodb+srv://akaranko:8LwpEIdvMJarQsLM@cluster0.zrmnklw.mongodb.net/?retryWrites=true&w=majority';
+    'mongodb+srv://akaranko:8LwpEIdvMJarQsLM@cluster0.zrmnklw.mongodb.net/shop?retryWrites=true&w=majority';
+
+let _db;
 
 const client = new MongoClient(url, {
     serverApi: {
@@ -13,16 +15,19 @@ const client = new MongoClient(url, {
 
 async function connect() {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
-        return await client.connect();
-        // Send a ping to confirm a successful connection
-        //await client.db('admin').command({ ping: 1 });
-        // console.log(
-        //     'Pinged your deployment. You successfully connected to MongoDB!'
-        // );
+        await client.connect();
+        _db = await client.db();
+        return _db;
     } catch (err) {
         console.dir(err);
     }
 }
 
-module.exports = connect;
+const getDb = () => {
+    if (_db) {
+        return _db;
+    }
+    throw 'No database connection found!';
+};
+
+module.exports = { connect, getDb };
