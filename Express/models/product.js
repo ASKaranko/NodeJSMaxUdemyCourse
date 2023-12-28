@@ -1,18 +1,46 @@
+const { ObjectId } = require('mongodb');
 const { getDb } = require('../util/database');
 
 class Product {
-    constructor(title, price, description, imageUrl) {
+    constructor(title, price, description, imageUrl, id) {
         this.title = title;
         this.price = price;
         this.description = description;
         this.imageUrl = imageUrl;
+        this._id = new ObjectId(id);
     }
 
     async save() {
         try {
             const db = getDb();
-            return await db.collection('products').insertOne(this);
-        } catch(err) {
+            if (this._id) {
+                return await db
+                    .collection('products')
+                    .updateOne({ _id: this._id }, { $set: this });
+            } else {
+                return await db.collection('products').insertOne(this);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    static async fetchAll() {
+        try {
+            const db = getDb();
+            return await db.collection('products').find().toArray();
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    static async findById(prodId) {
+        try {
+            const db = getDb();
+            return await db
+                .collection('products')
+                .findOne({ _id: new ObjectId(prodId) });
+        } catch (err) {
             console.log(err);
         }
     }
