@@ -24,17 +24,73 @@ class User {
         }
     }
 
+    async getCart() {
+        try {
+            const productsIds = this.cart.items.map((item) => item.productId);
+            const db = getDb();
+            const products = await db
+                .collection('products')
+                .find({ _id: { $in: productsIds } })
+                .toArray();
+            return products.map((p) => {
+                return {
+                    ...p,
+                    quantity: this.cart.items.find((cp) =>
+                        cp.productId.equals(p._id)
+                    ).quantity
+                };
+            });
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
     async addToCart(product) {
-        // const isProductInCart = this.cart.items.some(
-        //     (cp) => cp._id === product._id
-        // );
+        const cartProductIndex = this.cart.items.findIndex((cp) =>
+            cp.productId.equals(product._id)
+        );
+
+        let quantity = 1;
+        const updatedCartItems = [...this.cart.items];
+        if (cartProductIndex >= 0) {
+            quantity = this.cart.items[cartProductIndex].quantity + 1;
+            updatedCartItems[cartProductIndex].quantity = quantity;
+        } else {
+            updatedCartItems.push({
+                productId: new ObjectId(product._id),
+                quantity
+            });
+        }
+
         const updatedCart = {
-            items: [{ productId: new ObjectId(product._id), quantity: 1 }]
+            items: updatedCartItems
         };
         const db = getDb();
         await db
             .collection('users')
             .updateOne({ _id: this._id }, { $set: { cart: updatedCart } });
+    }
+
+    async deleteFromCart(prodId) {
+        try {
+            const db = getDb();
+            await db.collection('users').updateOne(
+                { _id: this._id },
+                {
+                    $set: {
+                        cart: {
+                            items: this.cart.items.filter(
+                                (cp) =>
+                                    cp.productId.toString() !==
+                                    prodId.toString()
+                            )
+                        }
+                    }
+                }
+            );
+        } catch (err) {
+            console.log(err);
+        }
     }
 
     static async findById(userId) {
