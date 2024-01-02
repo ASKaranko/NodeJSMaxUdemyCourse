@@ -93,6 +93,42 @@ class User {
         }
     }
 
+    async addOrder() {
+        try {
+            const db = getDb();
+            const products = await this.getCart();
+            const order = {
+                items: products,
+                user: {
+                    _id: this._id,
+                    name: this.email
+                }
+            };
+            await db.collection('orders').insertOne(order);
+            await db
+                .collection('users')
+                .updateOne(
+                    { _id: this._id },
+                    { $set: { cart: { items: [] } } }
+                );
+            this.cart = { items: [] };
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    async getOrders() {
+        try {
+            const db = getDb();
+            return await db
+                .collection('orders')
+                .find({ 'user._id': this._id })
+                .toArray();
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
     static async findById(userId) {
         try {
             const db = getDb();
