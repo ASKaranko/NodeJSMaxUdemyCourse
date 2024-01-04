@@ -16,23 +16,25 @@ app.set('views', 'views');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(async (req, res, next) => {
-    try {
-        const user = await User.findByName('admin');
-        req.user = new User(user.name, user.email, user.cart, user._id);
-    } catch (err) {
-        console.log(err);
-    }
-    next();
-});
+// app.use(async (req, res, next) => {
+//     try {
+//         const user = await User.findByName('admin');
+//         req.user = new User(user.name, user.email, user.cart, user._id);
+//     } catch (err) {
+//         console.log(err);
+//     }
+//     next();
+// });
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(errorController.get404);
 
+
+
 const createMondoDBconnection = async () => {
     await connect();
-    await createUser();
+    //await createUser();
     app.listen(3000);
 };
 
