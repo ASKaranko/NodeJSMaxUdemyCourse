@@ -13,15 +13,11 @@ exports.postAddProduct = (req, res, next) => {
     const imageUrl = req.body.imageUrl;
     const description = req.body.description;
     const price = req.body.price;
-    req.user
-        .createProduct({
-            title,
-            imageUrl,
-            description,
-            price
-        })
+    const product = new Product(title, price, description, imageUrl, null, req.user._id);
+    product
+        .save()
         .then((result) => {
-            console.log('Created Product');
+            console.log('Created Product :', result);
             res.redirect('/admin/products');
         })
         .catch((err) => console.log(err));
@@ -33,49 +29,44 @@ exports.getEditProduct = (req, res, next) => {
         return res.redirect('/');
     }
     const prodId = req.params.productId;
-    req.user
-        .getProducts({ where: { id: prodId } })
-        .then((products) => {
-            if (!products || products.length === 0) {
+    Product.findById(prodId)
+        .then((product) => {
+            if (!product) {
                 return res.redirect('/');
             }
             res.render('admin/edit-product', {
                 pageTitle: 'Edit Product',
                 path: '/admin/edit-product',
                 editing: editMode,
-                product: products[0]
+                product: product
             });
         })
         .catch((err) => console.log(err));
 };
 
-exports.postEditProduct = (req, res, next) => {
-    const prodId = req.body.productId;
-    const updatedTitle = req.body.title;
-    const updatedPrice = req.body.price;
-    const updatedImage = req.body.imageUrl;
-    const updatedDescription = req.body.description;
-    Product.findByPk(prodId)
-        .then((product) => {
-            product.title = updatedTitle;
-            product.price = updatedPrice;
-            product.imageUrl = updatedImage;
-            product.description = updatedDescription;
-            return product.save();
-        })
-        .then((result) => {
-            console.log('UPDATED PRODUCT');
-            res.redirect('/admin/products');
-        })
-        .catch((err) => console.log(err));
+exports.postEditProduct = async (req, res, next) => {
+    try {
+        const prodId = req.body.productId;
+        const updatedTitle = req.body.title;
+        const updatedPrice = req.body.price;
+        const updatedImage = req.body.imageUrl;
+        const updatedDescription = req.body.description;
+        await new Product(
+            updatedTitle,
+            updatedPrice,
+            updatedDescription,
+            updatedImage,
+            prodId
+        ).save();
+        res.redirect('/admin/products');
+    } catch (err) {
+        console.log(err);
+    }
 };
 
-exports.postDeleteProduct = (req, res, next) => {
+exports.postDeleteProduct = async (req, res, next) => {
     const prodId = req.body.productId;
-    Product.findByPk(prodId)
-        .then((product) => {
-            return product.destroy();
-        })
+    Product.deleteById(prodId)
         .then((result) => {
             console.log('DESTROYED PRODUCT!');
             res.redirect('/admin/products');
@@ -84,8 +75,7 @@ exports.postDeleteProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-    req.user
-        .getProducts()
+    Product.fetchAll()
         .then((products) => {
             res.render('admin/products', {
                 prods: products,
@@ -96,12 +86,12 @@ exports.getProducts = (req, res, next) => {
         .catch((err) => console.log(err));
 };
 
-exports.editProduct = (req, res, next) => {
-    Product.fetchAll((products) => {
-        res.render('admin/edit-product', {
-            prods: products,
-            pageTitle: 'Edit Product',
-            path: 'admin/edit-product'
-        });
-    });
-};
+// exports.editProduct = (req, res, next) => {
+//     Product.fetchAll((products) => {
+//         res.render('admin/edit-product', {
+//             prods: products,
+//             pageTitle: 'Edit Product',
+//             path: 'admin/edit-product'
+//         });
+//     });
+// };
