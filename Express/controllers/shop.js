@@ -39,7 +39,8 @@ exports.getIndex = (req, res, next) => {
 };
 
 exports.getCart = async (req, res, next) => {
-    const products = await req.user.getCart();
+    const user = await req.user.populate('cart.items.productId');
+    const products = user.cart.items;
     res.render('shop/cart', {
         pageTitle: 'Your Cart',
         path: '/cart',

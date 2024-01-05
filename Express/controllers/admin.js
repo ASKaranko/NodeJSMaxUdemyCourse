@@ -13,7 +13,13 @@ exports.postAddProduct = (req, res, next) => {
     const imageUrl = req.body.imageUrl;
     const description = req.body.description;
     const price = req.body.price;
-    const product = new Product({ title, price, description, imageUrl });
+    const product = new Product({
+        title,
+        price,
+        description,
+        imageUrl,
+        userId: req.user // mongoose will pick only id
+    });
     product
         .save()
         .then((result) => {
@@ -75,6 +81,7 @@ exports.postDeleteProduct = async (req, res, next) => {
 
 exports.getProducts = (req, res, next) => {
     Product.find()
+        // .populate('userId') // will return full user info (left JOIN)
         .then((products) => {
             res.render('admin/products', {
                 prods: products,

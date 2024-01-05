@@ -1,3 +1,55 @@
+const { Schema, model } = require('mongoose');
+
+const userSchema = new Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    email: {
+        type: String,
+        required: true
+    },
+    cart: {
+        items: [
+            {
+                productId: {
+                    type: Schema.Types.ObjectId,
+                    ref: 'Product',
+                    required: true
+                },
+                quantity: { type: Number, required: true }
+            }
+        ]
+    }
+});
+
+userSchema.methods.addToCart = async function (product) {
+    const cartProductIndex = this.cart.items.findIndex((cp) =>
+        cp.productId.equals(product._id)
+    );
+
+    let quantity = 1;
+    const updatedCartItems = [...this.cart.items];
+    if (cartProductIndex >= 0) {
+        quantity = this.cart.items[cartProductIndex].quantity + 1;
+        updatedCartItems[cartProductIndex].quantity = quantity;
+    } else {
+        updatedCartItems.push({
+            productId: product._id,
+            quantity
+        });
+    }
+
+    const updatedCart = {
+        items: updatedCartItems
+    };
+
+    this.cart = updatedCart;
+    await this.save();
+};
+
+module.exports = model('User', userSchema);
+
 // const { ObjectId } = require('mongodb');
 // const { getDb } = require('../util/database');
 
@@ -43,32 +95,6 @@
 //         } catch (err) {
 //             console.log(err);
 //         }
-//     }
-
-//     async addToCart(product) {
-//         const cartProductIndex = this.cart.items.findIndex((cp) =>
-//             cp.productId.equals(product._id)
-//         );
-
-//         let quantity = 1;
-//         const updatedCartItems = [...this.cart.items];
-//         if (cartProductIndex >= 0) {
-//             quantity = this.cart.items[cartProductIndex].quantity + 1;
-//             updatedCartItems[cartProductIndex].quantity = quantity;
-//         } else {
-//             updatedCartItems.push({
-//                 productId: new ObjectId(product._id),
-//                 quantity
-//             });
-//         }
-
-//         const updatedCart = {
-//             items: updatedCartItems
-//         };
-//         const db = getDb();
-//         await db
-//             .collection('users')
-//             .updateOne({ _id: this._id }, { $set: { cart: updatedCart } });
 //     }
 
 //     async deleteFromCart(prodId) {
