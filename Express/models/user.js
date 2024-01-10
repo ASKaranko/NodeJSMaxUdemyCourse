@@ -48,132 +48,24 @@ userSchema.methods.addToCart = async function (product) {
     await this.save();
 };
 
+userSchema.methods.deleteFromCart = async function (prodId) {
+    try {
+        this.cart.items = this.cart.items.filter(
+            (cp) => cp.productId.toString() !== prodId.toString()
+        );
+        await this.save();
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+userSchema.methods.clearCart = async function () {
+    try {
+        this.cart = { items: [] };
+        await this.save();
+    } catch (err) {
+        console.log(err);
+    }
+};
+
 module.exports = model('User', userSchema);
-
-// const { ObjectId } = require('mongodb');
-// const { getDb } = require('../util/database');
-
-// class User {
-//     constructor(username, email, cart, id) {
-//         this.name = username;
-//         this.email = email;
-//         this._id = id ? new ObjectId(id) : null;
-//         this.cart = cart;
-//     }
-
-//     async save() {
-//         try {
-//             const db = getDb();
-//             if (this._id) {
-//                 return await db
-//                     .collection('users')
-//                     .updateOne({ _id: this._id }, { $set: this });
-//             } else {
-//                 return await db.collection('users').insertOne(this);
-//             }
-//         } catch (err) {
-//             console.log(err);
-//         }
-//     }
-
-//     async getCart() {
-//         try {
-//             const productsIds = this.cart.items.map((item) => item.productId);
-//             const db = getDb();
-//             const products = await db
-//                 .collection('products')
-//                 .find({ _id: { $in: productsIds } })
-//                 .toArray();
-//             return products.map((p) => {
-//                 return {
-//                     ...p,
-//                     quantity: this.cart.items.find((cp) =>
-//                         cp.productId.equals(p._id)
-//                     ).quantity
-//                 };
-//             });
-//         } catch (err) {
-//             console.log(err);
-//         }
-//     }
-
-//     async deleteFromCart(prodId) {
-//         try {
-//             const db = getDb();
-//             await db.collection('users').updateOne(
-//                 { _id: this._id },
-//                 {
-//                     $set: {
-//                         cart: {
-//                             items: this.cart.items.filter(
-//                                 (cp) =>
-//                                     cp.productId.toString() !==
-//                                     prodId.toString()
-//                             )
-//                         }
-//                     }
-//                 }
-//             );
-//         } catch (err) {
-//             console.log(err);
-//         }
-//     }
-
-//     async addOrder() {
-//         try {
-//             const db = getDb();
-//             const products = await this.getCart();
-//             const order = {
-//                 items: products,
-//                 user: {
-//                     _id: this._id,
-//                     name: this.email
-//                 }
-//             };
-//             await db.collection('orders').insertOne(order);
-//             await db
-//                 .collection('users')
-//                 .updateOne(
-//                     { _id: this._id },
-//                     { $set: { cart: { items: [] } } }
-//                 );
-//             this.cart = { items: [] };
-//         } catch (err) {
-//             console.log(err);
-//         }
-//     }
-
-//     async getOrders() {
-//         try {
-//             const db = getDb();
-//             return await db
-//                 .collection('orders')
-//                 .find({ 'user._id': this._id })
-//                 .toArray();
-//         } catch (err) {
-//             console.log(err);
-//         }
-//     }
-
-//     static async findById(userId) {
-//         try {
-//             const db = getDb();
-//             return await db
-//                 .collection('users')
-//                 .findOne({ _id: new ObjectId(userId) });
-//         } catch (err) {
-//             console.log(err);
-//         }
-//     }
-
-//     static async findByName(name) {
-//         try {
-//             const db = getDb();
-//             return await db.collection('users').findOne({ name });
-//         } catch (err) {
-//             console.log(err);
-//         }
-//     }
-// }
-
-// module.exports = User;
