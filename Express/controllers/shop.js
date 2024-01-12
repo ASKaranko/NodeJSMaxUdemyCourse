@@ -1,15 +1,15 @@
 const Product = require('../models/product');
 const Order = require('../models/order');
+const User = require('../models/user');
 
 exports.getProducts = (req, res, next) => {
     Product.find()
         .then((products) => {
-            console.log(products);
             res.render('shop/product-list', {
                 prods: products,
                 pageTitle: 'All Products',
                 path: '/products',
-                isAuthenticated: req.isLoggedIn
+                isAuthenticated: req.session.isLoggedIn
             });
         })
         .catch((err) => console.log(err));
@@ -23,7 +23,7 @@ exports.getProduct = (req, res, next) => {
                 product,
                 pageTitle: product.title,
                 path: '/products',
-                isAuthenticated: req.isLoggedIn
+                isAuthenticated: req.session.isLoggedIn
             });
         })
         .catch((err) => console.log(err));
@@ -36,20 +36,20 @@ exports.getIndex = (req, res, next) => {
                 prods: products,
                 pageTitle: 'Shop',
                 path: '/',
-                isAuthenticated: req.isLoggedIn
+                isAuthenticated: req.session.isLoggedIn
             });
         })
         .catch((err) => console.log(err));
 };
 
 exports.getCart = async (req, res, next) => {
-    const user = await req.user.populate('cart.items.productId');
+    const user = await User.findById(req.session.user._id).populate('cart.items.productId');
     const products = user.cart.items;
     res.render('shop/cart', {
         pageTitle: 'Your Cart',
         path: '/cart',
         products,
-        isAuthenticated: req.isLoggedIn
+        isAuthenticated: req.session.isLoggedIn
     });
 };
 
@@ -57,7 +57,8 @@ exports.postCart = async (req, res, next) => {
     const prodId = req.body.productId;
     try {
         const product = await Product.findById(prodId);
-        await req.user.addToCart(product);
+        const user = await User.findById(req.session.user._id);
+        await user.addToCart(product);
         res.redirect('/cart');
     } catch (err) {
         console.log(err);
@@ -67,7 +68,8 @@ exports.postCart = async (req, res, next) => {
 exports.postCartDeleteProduct = async (req, res, next) => {
     const prodId = req.body.productId;
     try {
-        await req.user.deleteFromCart(prodId);
+        const user = await User.findById(req.session.user._id);
+        await user.deleteFromCart(prodId);
         res.redirect('/cart');
     } catch (err) {
         console.log(err);
@@ -76,7 +78,7 @@ exports.postCartDeleteProduct = async (req, res, next) => {
 
 exports.postOrder = async (req, res, next) => {
     try {
-        const user = await req.user.populate('cart.items.productId');
+        const user = await User.findById(req.session.user._id).populate('cart.items.productId');
         const products = user.cart.items.map((cp) => {
             return {
                 product: { ...cp.productId._doc }, // not all members on object, but doc only
@@ -85,13 +87,13 @@ exports.postOrder = async (req, res, next) => {
         });
         const order = new Order({
             user: {
-                name: req.user.name,
-                userId: req.user // mongoose will pick only id
+                name: user.name,
+                userId: user // mongoose will pick only id
             },
             products
         });
         await order.save();
-        await req.user.clearCart();
+        await user.clearCart();
         res.redirect('/orders');
     } catch (err) {
         console.log(err);
@@ -100,12 +102,12 @@ exports.postOrder = async (req, res, next) => {
 
 exports.getOrders = async (req, res, next) => {
     try {
-        const orders = await Order.find({ 'user.userId': req.user._id });
+        const orders = await Order.find({ 'user.userId': req.session.user._id });
         res.render('shop/orders', {
             pageTitle: 'Your Orders',
             path: '/orders',
             orders,
-            isAuthenticated: req.isLoggedIn
+            isAuthenticated: req.session.isLoggedIn
         });
     } catch (err) {
         console.log(err);
@@ -116,6 +118,6 @@ exports.getCheckout = (req, res, next) => {
     res.render('/shop/checkout', {
         pageTitle: 'Checkout',
         path: '/checkout',
-        isAuthenticated: req.isLoggedIn
+        isAuthenticated: req.session.isLoggedIn
     });
 };

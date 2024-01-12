@@ -1,15 +1,23 @@
 const express = require('express');
 const path = require('path');
-const { connect } = require('./util/database');
-const User = require('./models/user');
+const bodyParser = require('body-parser');
+const session = require('express-session');
+const mongoDBStore = require('connect-mongodb-session')(session);
+const uid = require('uid-safe');
 
+const { connect, url: uri } = require('./util/database');
+const User = require('./models/user');
 const errorController = require('./controllers/error');
+
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
-const bodyParser = require('body-parser');
 
 const app = express();
+const store = new mongoDBStore({
+    uri,
+    collection: 'sessions'
+});
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -17,15 +25,17 @@ app.set('views', 'views');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(async (req, res, next) => {
-    try {
-        const user = await User.findOne({name: 'Andrei'});
-        req.user = user;
-    } catch (err) {
-        console.log(err);
-    }
-    next();
-});
+app.use(
+    session({
+        genid: function () {
+            return uid.sync(18);
+        },
+        secret: 'tFvsaFfHHK44gU', // cspell:ignore tFvsaFfHHK44gU
+        resave: false,
+        saveUninitialized: false,
+        store
+    })
+);
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
@@ -39,7 +49,7 @@ const createMondoDBconnection = async () => {
 };
 
 const createUser = async () => {
-    if (!(await User.findOne({name: 'Andrei'}))) {
+    if (!(await User.findOne({ name: 'Andrei' }))) {
         return await new User({
             name: 'Andrei',
             email: 'andr.karanko@gmail.com',
