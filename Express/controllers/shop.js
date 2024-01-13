@@ -4,11 +4,11 @@ const Order = require('../models/order');
 exports.getProducts = (req, res, next) => {
     Product.find()
         .then((products) => {
-            console.log(products);
             res.render('shop/product-list', {
                 prods: products,
                 pageTitle: 'All Products',
-                path: '/products'
+                path: '/products',
+                isAuthenticated: req.session.isLoggedIn
             });
         })
         .catch((err) => console.log(err));
@@ -21,7 +21,8 @@ exports.getProduct = (req, res, next) => {
             res.render('shop/product-detail', {
                 product,
                 pageTitle: product.title,
-                path: '/products'
+                path: '/products',
+                isAuthenticated: req.session.isLoggedIn
             });
         })
         .catch((err) => console.log(err));
@@ -33,7 +34,8 @@ exports.getIndex = (req, res, next) => {
             res.render('shop/index', {
                 prods: products,
                 pageTitle: 'Shop',
-                path: '/'
+                path: '/',
+                isAuthenticated: req.session.isLoggedIn
             });
         })
         .catch((err) => console.log(err));
@@ -45,7 +47,8 @@ exports.getCart = async (req, res, next) => {
     res.render('shop/cart', {
         pageTitle: 'Your Cart',
         path: '/cart',
-        products
+        products,
+        isAuthenticated: req.session.isLoggedIn
     });
 };
 
@@ -81,13 +84,13 @@ exports.postOrder = async (req, res, next) => {
         });
         const order = new Order({
             user: {
-                name: req.user.name,
-                userId: req.user // mongoose will pick only id
+                name: user.name,
+                userId: user // mongoose will pick only id
             },
             products
         });
         await order.save();
-        await req.user.clearCart();
+        await user.clearCart();
         res.redirect('/orders');
     } catch (err) {
         console.log(err);
@@ -100,7 +103,8 @@ exports.getOrders = async (req, res, next) => {
         res.render('shop/orders', {
             pageTitle: 'Your Orders',
             path: '/orders',
-            orders
+            orders,
+            isAuthenticated: req.session.isLoggedIn
         });
     } catch (err) {
         console.log(err);
@@ -110,6 +114,7 @@ exports.getOrders = async (req, res, next) => {
 exports.getCheckout = (req, res, next) => {
     res.render('/shop/checkout', {
         pageTitle: 'Checkout',
-        path: '/checkout'
+        path: '/checkout',
+        isAuthenticated: req.session.isLoggedIn
     });
 };
