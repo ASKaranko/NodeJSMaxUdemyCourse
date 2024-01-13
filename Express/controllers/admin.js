@@ -19,7 +19,7 @@ exports.postAddProduct = (req, res, next) => {
         price,
         description,
         imageUrl,
-        userId: req.session.user // mongoose will pick only id
+        userId: req.user // mongoose will pick only id
     });
     product
         .save()

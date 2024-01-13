@@ -1,6 +1,5 @@
 const Product = require('../models/product');
 const Order = require('../models/order');
-const User = require('../models/user');
 
 exports.getProducts = (req, res, next) => {
     Product.find()
@@ -43,7 +42,7 @@ exports.getIndex = (req, res, next) => {
 };
 
 exports.getCart = async (req, res, next) => {
-    const user = await User.findById(req.session.user._id).populate('cart.items.productId');
+    const user = await req.user.populate('cart.items.productId');
     const products = user.cart.items;
     res.render('shop/cart', {
         pageTitle: 'Your Cart',
@@ -57,8 +56,7 @@ exports.postCart = async (req, res, next) => {
     const prodId = req.body.productId;
     try {
         const product = await Product.findById(prodId);
-        const user = await User.findById(req.session.user._id);
-        await user.addToCart(product);
+        await req.user.addToCart(product);
         res.redirect('/cart');
     } catch (err) {
         console.log(err);
@@ -68,8 +66,7 @@ exports.postCart = async (req, res, next) => {
 exports.postCartDeleteProduct = async (req, res, next) => {
     const prodId = req.body.productId;
     try {
-        const user = await User.findById(req.session.user._id);
-        await user.deleteFromCart(prodId);
+        await req.user.deleteFromCart(prodId);
         res.redirect('/cart');
     } catch (err) {
         console.log(err);
@@ -78,7 +75,7 @@ exports.postCartDeleteProduct = async (req, res, next) => {
 
 exports.postOrder = async (req, res, next) => {
     try {
-        const user = await User.findById(req.session.user._id).populate('cart.items.productId');
+        const user = await req.user.populate('cart.items.productId');
         const products = user.cart.items.map((cp) => {
             return {
                 product: { ...cp.productId._doc }, // not all members on object, but doc only
@@ -102,7 +99,7 @@ exports.postOrder = async (req, res, next) => {
 
 exports.getOrders = async (req, res, next) => {
     try {
-        const orders = await Order.find({ 'user.userId': req.session.user._id });
+        const orders = await Order.find({ 'user.userId': req.user._id });
         res.render('shop/orders', {
             pageTitle: 'Your Orders',
             path: '/orders',
