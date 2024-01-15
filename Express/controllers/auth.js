@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 
 exports.getLogin = async (req, res, next) => {
@@ -9,15 +10,21 @@ exports.getLogin = async (req, res, next) => {
 };
 
 exports.postLogin = async (req, res, next) => {
-    const user = await User.findOne({ name: 'Andrei' });
-    req.session.isLoggedIn = true;
-    req.session.user = user;
-    // save is usually called automatically, but in this case we need to make sure
-    // that the session is saved before we redirect the user
-    req.session.save((err) => {
-        console.log(err);
-        res.redirect('/');
-    });
+    const email = req.body.email;
+    const password = req.body.password;
+    const user = await User.findOne({ email });
+    if (user && user.password === password) {
+        req.session.isLoggedIn = true;
+        req.session.user = user;
+        // save is usually called automatically, but in this case we need to make sure
+        // that the session is saved before we redirect the user
+        req.session.save((err) => {
+            console.log(err);
+            res.redirect('/');
+        });
+    } else {
+        res.redirect('/login');
+    }
 };
 
 exports.postLogout = async (req, res, next) => {
@@ -25,4 +32,34 @@ exports.postLogout = async (req, res, next) => {
         console.log(err);
         res.redirect('/');
     });
+};
+
+exports.getSignup = (req, res, next) => {
+    res.render('auth/signup', {
+        path: '/signup',
+        pageTitle: 'Signup',
+        isAuthenticated: false
+    });
+};
+
+exports.postSignup = async (req, res, next) => {
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
+        const confirmPassword = req.body.confirmPassword;
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.redirect('signup');
+        }
+        const hashedPassword = await bcrypt.hash(password, 12);
+        await new User({
+            email,
+            password: hashedPassword,
+            cart: { items: [] }
+        }).save();
+        res.redirect('/login');
+    } catch (err) {
+        console.log(err);
+    }
 };

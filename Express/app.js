@@ -51,18 +51,7 @@ app.use(errorController.get404);
 
 const createMondoDBconnection = async () => {
     await connect();
-    await createUser();
     app.listen(3000);
-};
-
-const createUser = async () => {
-    if (!(await User.findOne({ name: 'Andrei' }))) {
-        return await new User({
-            name: 'Andrei',
-            email: 'andr.karanko@gmail.com',
-            cart: { items: [] }
-        }).save();
-    }
 };
 
 createMondoDBconnection();
