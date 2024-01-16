@@ -10,19 +10,27 @@ exports.getLogin = async (req, res, next) => {
 };
 
 exports.postLogin = async (req, res, next) => {
-    const email = req.body.email;
-    const password = req.body.password;
-    const user = await User.findOne({ email });
-    if (user && user.password === password) {
-        req.session.isLoggedIn = true;
-        req.session.user = user;
-        // save is usually called automatically, but in this case we need to make sure
-        // that the session is saved before we redirect the user
-        req.session.save((err) => {
-            console.log(err);
-            res.redirect('/');
-        });
-    } else {
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.redirect('/login');
+        }
+        const doMatch = await bcrypt.compare(password, user.password);
+        if (doMatch) {
+            req.session.isLoggedIn = true;
+            req.session.user = user;
+            // save is usually called automatically, but in this case we need to make sure
+            // that the session is saved before we redirect the user
+            return await req.session.save((err) => {
+                console.log(err);
+                res.redirect('/');
+            });
+        }
+        res.redirect('/login');
+    } catch (err) {
+        console.log(err);
         res.redirect('/login');
     }
 };
