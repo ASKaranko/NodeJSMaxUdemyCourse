@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const mongoDBStore = require('connect-mongodb-session')(session);
 const uid = require('uid-safe');
+const csrf = require('csurf');
+const flash = require('connect-flash');
 
 const { connect, url: uri } = require('./util/database');
 const User = require('./models/user');
@@ -18,6 +20,8 @@ const store = new mongoDBStore({
     uri,
     collection: 'sessions'
 });
+const csrfProtection = csrf({});
+app.use(flash());
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -37,10 +41,18 @@ app.use(
     })
 );
 
+app.use(csrfProtection);
+
 app.use(async (req, res, next) => {
     if (req.session?.user?._id) {
         req.user = await User.findById(req.session.user._id);
     }
+    next();
+});
+
+app.use((req, res, next) => {
+    res.locals.isAuthenticated = req.session.isLoggedIn;
+    res.locals.csrfToken = req.csrfToken();
     next();
 });
 

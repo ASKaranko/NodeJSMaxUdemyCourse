@@ -8,7 +8,6 @@ exports.getProducts = (req, res, next) => {
                 prods: products,
                 pageTitle: 'All Products',
                 path: '/products',
-                isAuthenticated: req.session.isLoggedIn
             });
         })
         .catch((err) => console.log(err));
@@ -22,7 +21,6 @@ exports.getProduct = (req, res, next) => {
                 product,
                 pageTitle: product.title,
                 path: '/products',
-                isAuthenticated: req.session.isLoggedIn
             });
         })
         .catch((err) => console.log(err));
@@ -35,7 +33,6 @@ exports.getIndex = (req, res, next) => {
                 prods: products,
                 pageTitle: 'Shop',
                 path: '/',
-                isAuthenticated: req.session.isLoggedIn
             });
         })
         .catch((err) => console.log(err));
@@ -48,7 +45,6 @@ exports.getCart = async (req, res, next) => {
         pageTitle: 'Your Cart',
         path: '/cart',
         products,
-        isAuthenticated: req.session.isLoggedIn
     });
 };
 
@@ -84,7 +80,7 @@ exports.postOrder = async (req, res, next) => {
         });
         const order = new Order({
             user: {
-                name: user.name,
+                name: user.email,
                 userId: user // mongoose will pick only id
             },
             products
@@ -104,7 +100,6 @@ exports.getOrders = async (req, res, next) => {
             pageTitle: 'Your Orders',
             path: '/orders',
             orders,
-            isAuthenticated: req.session.isLoggedIn
         });
     } catch (err) {
         console.log(err);
@@ -115,6 +110,5 @@ exports.getCheckout = (req, res, next) => {
     res.render('/shop/checkout', {
         pageTitle: 'Checkout',
         path: '/checkout',
-        isAuthenticated: req.session.isLoggedIn
     });
 };
