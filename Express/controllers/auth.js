@@ -112,7 +112,7 @@ exports.postReset = async (req, res, next) => {
         const existingUser = await User.findOne({ email });
         if (!existingUser) {
             req.flash('error', 'No user with this email found.');
-            return redirect('/reset');
+            return res.redirect('/reset');
         }
         existingUser.resetToken = token;
         existingUser.resetTokenExpiration = Date.now() + 3600000;
@@ -129,5 +129,52 @@ exports.postReset = async (req, res, next) => {
     } catch (err) {
         console.log(err);
         return res.redirect('/reset');
+    }
+};
+
+exports.getNewPassword = async (req, res, next) => {
+    try {
+        const token = req.params.token;
+        const user = await User.findOne({
+            resetToken: token,
+            resetTokenExpiration: { $gt: Date.now() }
+        });
+        if (!user) {
+            req.flash('error', 'No user with this token found.');
+            return res.redirect('/reset');
+        }
+        const message = req.flash('error');
+        res.render('auth/new-password', {
+            path: '/new-password',
+            pageTitle: 'New Password',
+            userId: user._id.toString(),
+            passwordToken: token,
+            errorMessage: message.length > 0 ? message[0] : null
+        });
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+exports.postNewPassword = async (req, res, next) => {
+    try {
+        const { password, userId, passwordToken } = req.body;
+        const user = await User.findOne({
+            resetToken: passwordToken,
+            resetTokenExpiration: { $gt: Date.now() },
+            _id: userId
+        });
+        if (!user) {
+            req.flash('error', 'No user found for password reset.');
+            return res.redirect('/reset');
+        }
+        const hashedPassword = await bcrypt.hash(password, 12);
+        user.password = hashedPassword;
+        user.resetToken = null;
+        user.resetTokenExpiration = null;
+        await user.save();
+        res.redirect('/login');
+    } catch (err) {
+        console.log(err);
     }
 };

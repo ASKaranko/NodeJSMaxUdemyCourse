@@ -44,6 +44,8 @@ app.use(
 app.use(csrfProtection);
 
 app.use(async (req, res, next) => {
+    // we need user object from db, bc in session object is serialized
+    // and all the methods are gone
     if (req.session?.user?._id) {
         req.user = await User.findById(req.session.user._id);
     }
