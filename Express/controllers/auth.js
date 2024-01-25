@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const { randomBytes } = require('crypto');
 const nodemailer = require('nodemailer');
 const sgTransport = require('nodemailer-sendgrid-transport');
+const { validationResult } = require('express-validator');
 const User = require('../models/user');
 const user = require('../models/user');
 
@@ -71,7 +72,15 @@ exports.postSignup = async (req, res, next) => {
         const email = req.body.email;
         const password = req.body.password;
         const confirmPassword = req.body.confirmPassword;
-
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            console.log("🚀 ~ exports.postSignup= ~ errors:", errors)
+            return res.status(422).render('auth/signup', {
+                path: '/signup',
+                pageTitle: 'Signup',
+                errorMessage: errors.array()[0].msg
+            });
+        }
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             req.flash('error', 'User with this email already exists.');
