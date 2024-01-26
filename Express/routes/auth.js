@@ -2,11 +2,19 @@ const express = require('express');
 const { check, body } = require('express-validator');
 
 const authController = require('../controllers/auth');
+const User = require('../models/user');
 
 const router = express.Router();
 
 router.get('/login', authController.getLogin);
-router.post('/login', authController.postLogin);
+router.post(
+    '/login',
+    body('email', 'Please, enter a valid email address').isEmail(),
+    body('password', 'Please, enter a valid password')
+        .isLength({ min: 8 })
+        .isAlphanumeric(),
+    authController.postLogin
+);
 router.post('/logout', authController.postLogout);
 router.get('/signup', authController.getSignup);
 router.post(
@@ -14,9 +22,10 @@ router.post(
     check('email')
         .isEmail()
         .withMessage('Please, enter a valid email address')
-        .custom((value, { req }) => {
-            if (value === 'test@test.com') {
-                throw new Error('This email address is dummy');
+        .custom(async (email, { req }) => {
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                throw new Error('User with this email already exists.');
             }
             return true;
         }),
@@ -28,7 +37,7 @@ router.post(
         .isAlphanumeric(),
     body('confirmPassword').custom((value, { req }) => {
         if (value !== req.body.password) {
-            throw new Error('Passwords not matched')
+            throw new Error('Passwords not matched');
         }
         return true;
     }),
