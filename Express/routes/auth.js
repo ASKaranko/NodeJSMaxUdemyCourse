@@ -9,10 +9,13 @@ const router = express.Router();
 router.get('/login', authController.getLogin);
 router.post(
     '/login',
-    body('email', 'Please, enter a valid email address').isEmail(),
+    body('email', 'Please, enter a valid email address')
+        .isEmail()
+        .normalizeEmail(),
     body('password', 'Please, enter a valid password')
         .isLength({ min: 8 })
-        .isAlphanumeric(),
+        .isAlphanumeric()
+        .trim(),
     authController.postLogin
 );
 router.post('/logout', authController.postLogout);
@@ -28,19 +31,23 @@ router.post(
                 throw new Error('User with this email already exists.');
             }
             return true;
-        }),
+        })
+        .normalizeEmail(),
     body(
         'password',
         'Please, enter a valid password. It must have numbers and text and be at least 8 characters long'
     )
         .isLength({ min: 8 })
-        .isAlphanumeric(),
-    body('confirmPassword').custom((value, { req }) => {
-        if (value !== req.body.password) {
-            throw new Error('Passwords not matched');
-        }
-        return true;
-    }),
+        .isAlphanumeric()
+        .trim(),
+    body('confirmPassword')
+        .trim()
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Passwords not matched');
+            }
+            return true;
+        }),
     authController.postSignup
 );
 router.get('/reset', authController.getReset);
