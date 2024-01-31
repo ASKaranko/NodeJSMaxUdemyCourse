@@ -47,9 +47,18 @@ app.use(async (req, res, next) => {
     // we need user object from db, bc in session object is serialized
     // and all the methods are gone
     if (req.session?.user?._id) {
-        req.user = await User.findById(req.session.user._id);
+        try {
+            const user = await User.findById(req.session.user._id);
+            if (user) {
+                req.user = user;
+            }
+            next();
+        } catch (err) {
+            console.log('error inside user request ', err);
+        }
+    } else {
+        next();
     }
-    next();
 });
 
 app.use((req, res, next) => {
@@ -61,6 +70,7 @@ app.use((req, res, next) => {
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
+app.use('/500', errorController.get500);
 app.use(errorController.get404);
 
 const createMondoDBconnection = async () => {
