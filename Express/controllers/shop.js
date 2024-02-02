@@ -7,10 +7,14 @@ exports.getProducts = (req, res, next) => {
             res.render('shop/product-list', {
                 prods: products,
                 pageTitle: 'All Products',
-                path: '/products',
+                path: '/products'
             });
         })
-        .catch((err) => console.log(err));
+        .catch((err) => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
+        });
 };
 
 exports.getProduct = (req, res, next) => {
@@ -20,10 +24,14 @@ exports.getProduct = (req, res, next) => {
             res.render('shop/product-detail', {
                 product,
                 pageTitle: product.title,
-                path: '/products',
+                path: '/products'
             });
         })
-        .catch((err) => console.log(err));
+        .catch((err) => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
+        });
 };
 
 exports.getIndex = (req, res, next) => {
@@ -32,10 +40,14 @@ exports.getIndex = (req, res, next) => {
             res.render('shop/index', {
                 prods: products,
                 pageTitle: 'Shop',
-                path: '/',
+                path: '/'
             });
         })
-        .catch((err) => console.log(err));
+        .catch((err) => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
+        });
 };
 
 exports.getCart = async (req, res, next) => {
@@ -44,7 +56,7 @@ exports.getCart = async (req, res, next) => {
     res.render('shop/cart', {
         pageTitle: 'Your Cart',
         path: '/cart',
-        products,
+        products
     });
 };
 
@@ -55,7 +67,9 @@ exports.postCart = async (req, res, next) => {
         await req.user.addToCart(product);
         res.redirect('/cart');
     } catch (err) {
-        console.log(err);
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
     }
 };
 
@@ -65,7 +79,9 @@ exports.postCartDeleteProduct = async (req, res, next) => {
         await req.user.deleteFromCart(prodId);
         res.redirect('/cart');
     } catch (err) {
-        console.log(err);
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
     }
 };
 
@@ -89,7 +105,9 @@ exports.postOrder = async (req, res, next) => {
         await user.clearCart();
         res.redirect('/orders');
     } catch (err) {
-        console.log(err);
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
     }
 };
 
@@ -99,16 +117,18 @@ exports.getOrders = async (req, res, next) => {
         res.render('shop/orders', {
             pageTitle: 'Your Orders',
             path: '/orders',
-            orders,
+            orders
         });
     } catch (err) {
-        console.log(err);
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
     }
 };
 
 exports.getCheckout = (req, res, next) => {
     res.render('/shop/checkout', {
         pageTitle: 'Checkout',
-        path: '/checkout',
+        path: '/checkout'
     });
 };
