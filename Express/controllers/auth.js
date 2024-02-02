@@ -77,8 +77,9 @@ exports.postLogin = async (req, res, next) => {
 
 exports.postLogout = async (req, res, next) => {
     req.session.destroy((err) => {
-        console.log(err);
-        res.redirect('/');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
     });
 };
 
@@ -124,7 +125,9 @@ exports.postSignup = async (req, res, next) => {
             html: '<h1>You successfully signed up!</h1>'
         });
     } catch (err) {
-        console.log(err);
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
     }
 };
 
@@ -185,7 +188,9 @@ exports.getNewPassword = async (req, res, next) => {
             errorMessage: message.length > 0 ? message[0] : null
         });
     } catch (err) {
-        console.log(err);
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
     }
 };
 
@@ -208,6 +213,8 @@ exports.postNewPassword = async (req, res, next) => {
         await user.save();
         res.redirect('/login');
     } catch (err) {
-        console.log(err);
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
     }
 };
