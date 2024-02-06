@@ -1,3 +1,5 @@
+const { readFile } = require('node:fs/promises');
+const path = require('path');
 const Product = require('../models/product');
 const Order = require('../models/order');
 
@@ -96,13 +98,14 @@ exports.postOrder = async (req, res, next) => {
         });
         const order = new Order({
             user: {
-                name: user.email,
+                email: user.email,
                 userId: user // mongoose will pick only id
             },
             products
         });
         await order.save();
         await user.clearCart();
+        cp.productId._doc;
         res.redirect('/orders');
     } catch (err) {
         const error = new Error(err);
@@ -119,6 +122,22 @@ exports.getOrders = async (req, res, next) => {
             path: '/orders',
             orders
         });
+    } catch (err) {
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+    }
+};
+
+exports.getInvoice = async (req, res, next) => {
+    try {
+        const orderId = req.params.orderId;
+        const invoiceName = `invoice-${orderId}.pdf`;
+        const invoicePath = path.join('data', 'invoices', invoiceName);
+        const data = await readFile(invoicePath);
+        res.set('Content-Type', 'application/pdf');
+        res.set('Content-Disposition', `inline; filename=${invoiceName}`);
+        res.send(data);
     } catch (err) {
         const error = new Error(err);
         error.httpStatusCode = 500;
