@@ -76,11 +76,14 @@ exports.postLogin = async (req, res, next) => {
 };
 
 exports.postLogout = async (req, res, next) => {
-    req.session.destroy((err) => {
+    try {
+        await req.session.destroy();
+        res.redirect('/');
+    } catch (err) {
         const error = new Error(err);
         error.httpStatusCode = 500;
         return next(error);
-    });
+    }
 };
 
 exports.getSignup = (req, res, next) => {

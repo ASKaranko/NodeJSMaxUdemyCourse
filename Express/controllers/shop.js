@@ -1,7 +1,8 @@
-const { readFile } = require('node:fs/promises');
+const { createWriteStream } = require('node:fs');
 const path = require('path');
 const Product = require('../models/product');
 const Order = require('../models/order');
+const PDFDocument = require('pdfkit');
 
 exports.getProducts = (req, res, next) => {
     Product.find()
@@ -132,12 +133,41 @@ exports.getOrders = async (req, res, next) => {
 exports.getInvoice = async (req, res, next) => {
     try {
         const orderId = req.params.orderId;
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return next(new Error('No order is found'));
+        }
+        if (order.user.userId.toString() !== req.user._id.toString()) {
+            return next(new Error('Unauthorized to see an invoice'));
+        }
         const invoiceName = `invoice-${orderId}.pdf`;
         const invoicePath = path.join('data', 'invoices', invoiceName);
-        const data = await readFile(invoicePath);
+
+        const doc = new PDFDocument();
         res.set('Content-Type', 'application/pdf');
         res.set('Content-Disposition', `inline; filename=${invoiceName}`);
-        res.send(data);
+
+        doc.pipe(createWriteStream(invoicePath));
+        doc.pipe(res);
+
+        doc.fontSize(27).font('Courier').text('Invoice', {
+            align: 'center',
+            underline: true
+        });
+        doc.moveDown();
+
+        let totalPrice = 0;
+        order.products.forEach((p) => {
+            totalPrice += p.quantity * p.product.price;
+            doc.fontSize(14).text(
+                `${p.product.title} - ${p.quantity} x $ ${p.product.price}`,
+                { align: 'left' }
+            );
+        });
+
+        doc.moveDown();
+        doc.fontSize(20).text(`Total price: $ ${totalPrice}`);
+        doc.end();
     } catch (err) {
         const error = new Error(err);
         error.httpStatusCode = 500;
