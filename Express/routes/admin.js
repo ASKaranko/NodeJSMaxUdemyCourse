@@ -24,6 +24,8 @@ router.post(
     isAuth,
     adminController.postEditProduct
 );
-router.post('/delete-product/', isAuth, adminController.postDeleteProduct);
+// semantic word "delete" - we use js to send request to delete product now,
+// previously, we used post request from form 
+router.delete('/product/:productId', isAuth, adminController.deleteProduct);
 
 module.exports = router;
