@@ -3,6 +3,7 @@ const path = require('path');
 const Product = require('../models/product');
 const Order = require('../models/order');
 const PDFDocument = require('pdfkit');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const ITEMS_PER_PAGE = 2;
 
@@ -120,20 +121,46 @@ exports.getCheckout = async (req, res, next) => {
         products.forEach((p) => {
             total += p.quantity * p.productId.price;
         });
+
+        const session = await stripe.checkout.sessions.create({
+            mode: 'payment',
+            payment_method_types: ['card'],
+            line_items: products.map((p) => {
+                return {
+                    price_data: {
+                        currency: 'usd',
+                        unit_amount: p.productId.price * 100,
+                        product_data: {
+                            name: p.productId.title,
+                            description: p.productId.description
+                        },
+                    },
+                    quantity: p.quantity
+                };
+            }),
+            success_url:
+                req.protocol + '://' + req.get('host') + '/checkout/success',
+            cancel_url:
+                req.protocol + '://' + req.get('host') + '/checkout/cancel'
+        });
+
         res.render('shop/checkout', {
             pageTitle: 'Checkout',
             path: '/checkout',
             products,
-            total
+            total,
+            publishKey: process.env.STRIPE_PUBLISH_KEY,
+            sessionId: session.id
         });
     } catch (err) {
+        //console.log('🚀 ~ exports.getCheckout= ~ err:', err);
         const error = new Error(err);
         error.httpStatusCode = 500;
         return next(error);
     }
 };
 
-exports.postOrder = async (req, res, next) => {
+exports.getCheckoutSuccess = async (req, res, next) => {
     try {
         const user = await req.user.populate('cart.items.productId');
         const products = user.cart.items.map((cp) => {
