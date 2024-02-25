@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const feedRoutes = require('./routes/feed');
 
 const app = express();
+const { connect, url: uri } = require('./util/database');
 
 //app.use(bodyParser.urlencoded());
 app.use(bodyParser.json()); // application/json requests
@@ -20,4 +21,8 @@ app.use((req, res, next) => {
 });
 app.use('/feed', feedRoutes);
 
-app.listen(process.env.PORT);
+const createMondoDBconnection = async () => {
+    await connect();
+    app.listen(process.env.PORT);
+};
+createMondoDBconnection();
