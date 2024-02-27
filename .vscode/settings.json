@@ -24,6 +24,7 @@
         "genid",
         "genuuid",
         "Palatino",
-        "sendgrid"
+        "sendgrid",
+        "uuidv"
     ]
 }

@@ -9,7 +9,7 @@ exports.getPosts = async (req, res, next) => {
             posts
         });
     } catch (error) {
-        console.log("🚀 ~ exports.getPosts= ~ error:", error)
+        console.log('🚀 ~ exports.getPosts= ~ error:', error);
         if (!error.statusCode) {
             error.statusCode = 500;
         }
@@ -45,6 +45,7 @@ exports.createPost = async (req, res, next) => {
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log(errors);
             const error = new Error(
                 'Validation failed. Please, enter data in correct format'
             );
@@ -52,10 +53,16 @@ exports.createPost = async (req, res, next) => {
             throw error;
         }
 
+        if (!req.file) {
+            const error = new Error('No image provided.');
+            error.statusCode = 422;
+            throw error;
+        }
+
         const post = await new Post({
             title,
             content,
-            imageUrl: 'images/spring.jpg',
+            imageUrl: req.file.path.replace('\\', '/'),
             creator: { name: 'Andrei' }
         }).save();
 
