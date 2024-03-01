@@ -2,12 +2,14 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const multer = require('multer');
-const feedRoutes = require('./routes/feed');
-
 const { v4: uuidv4 } = require('uuid');
+const { connect, url: uri } = require('./util/database');
+
+//Routes
+const feedRoutes = require('./routes/feed');
+const authRoutes = require('./routes/auth');
 
 const app = express();
-const { connect, url: uri } = require('./util/database');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -46,14 +48,19 @@ app.use((req, res, next) => {
     );
     next();
 });
+
+//Use routes
 app.use('/feed', feedRoutes);
+app.use('/auth', authRoutes);
 
 // error middleware
 app.use((error, req, res, next) => {
     const status = error.statusCode || 500;
     const message = error.message;
+    const data = error.data;
     res.status(status).json({
-        message
+        message,
+        data
     });
 });
 

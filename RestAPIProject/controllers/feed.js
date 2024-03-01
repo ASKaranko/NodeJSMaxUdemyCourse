@@ -3,12 +3,21 @@ const { unlink } = require('node:fs/promises');
 const path = require('path');
 const Post = require('../models/post');
 
+const POSTS_PER_PAGE = 2;
+
 exports.getPosts = async (req, res, next) => {
     try {
-        const posts = await Post.find();
+        const page = req.query.page || 1;
+        const totalPosts = await Post.countDocuments();
+
+        const posts = await Post.find()
+            .skip((page - 1) * POSTS_PER_PAGE)
+            .limit(POSTS_PER_PAGE);
+
         res.status(200).json({
             message: 'Posts fetched.',
-            posts
+            posts,
+            totalItems: totalPosts
         });
     } catch (error) {
         console.log('🚀 ~ exports.getPosts= ~ error:', error);
@@ -147,7 +156,7 @@ exports.deletePost = async (req, res, next) => {
         await clearImage(post.imageUrl);
         await Post.deleteOne({ _id: postId });
         res.status(200).json({
-            message: 'Post Deleted.',
+            message: 'Post Deleted.'
         });
     } catch (error) {
         if (!error.statusCode) {
@@ -162,6 +171,6 @@ const clearImage = async (filePath) => {
         filePath = path.join(__dirname, '..', filePath);
         await unlink(filePath);
     } catch (error) {
-        console.log("🚀 ~ clearImage ~ error:", error)
+        console.log('🚀 ~ clearImage ~ error:', error);
     }
 };
