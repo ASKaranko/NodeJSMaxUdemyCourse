@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const { unlink } = require('node:fs/promises');
 const path = require('path');
 const Post = require('../models/post');
+const User = require('../models/user');
 
 const POSTS_PER_PAGE = 2;
 
@@ -74,14 +75,20 @@ exports.createPost = async (req, res, next) => {
             title,
             content,
             imageUrl: req.file.path.replace('\\', '/'),
-            creator: { name: 'Andrei' }
+            creator: req.userId
         }).save();
 
+        const user = await User.findById(req.userId);
+        user.posts.push(post);
+        const updatedUser = await user.save();
+        
         res.status(201).json({
             message: 'Post created successfully!',
-            post
+            post,
+            creator: { _id: updatedUser._id, name: updatedUser.name }
         });
     } catch (error) {
+        console.log("🚀 ~ exports.createPost= ~ error:", error)
         if (!error.statusCode) {
             error.statusCode = 500;
         }
@@ -121,6 +128,12 @@ exports.updatePost = async (req, res, next) => {
             throw error;
         }
 
+        if (post.creator.toString() !== req.userId) {
+            const error = new Error('Not authorized!');
+            error.statusCode = 403;
+            throw error;
+        }
+
         if (imageUrl !== post.imageUrl) {
             await clearImage(post.imageUrl);
         }
@@ -152,9 +165,20 @@ exports.deletePost = async (req, res, next) => {
             error.statusCode = 404;
             throw error;
         }
-        // TO DO: check logged in user
+
+        if (post.creator.toString() !== req.userId) {
+            const error = new Error('Not authorized!');
+            error.statusCode = 403;
+            throw error;
+        }
+
         await clearImage(post.imageUrl);
         await Post.deleteOne({ _id: postId });
+
+        const user = await User.findById(req.userId);
+        user.posts.pull(postId);
+        await user.save();
+
         res.status(200).json({
             message: 'Post Deleted.'
         });
