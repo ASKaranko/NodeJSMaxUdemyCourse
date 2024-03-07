@@ -12,6 +12,7 @@ exports.getPosts = async (req, res, next) => {
         const totalPosts = await Post.countDocuments();
 
         const posts = await Post.find()
+            .populate('creator')
             .skip((page - 1) * POSTS_PER_PAGE)
             .limit(POSTS_PER_PAGE);
 
@@ -81,14 +82,14 @@ exports.createPost = async (req, res, next) => {
         const user = await User.findById(req.userId);
         user.posts.push(post);
         const updatedUser = await user.save();
-        
+
         res.status(201).json({
             message: 'Post created successfully!',
             post,
             creator: { _id: updatedUser._id, name: updatedUser.name }
         });
     } catch (error) {
-        console.log("🚀 ~ exports.createPost= ~ error:", error)
+        console.log('🚀 ~ exports.createPost= ~ error:', error);
         if (!error.statusCode) {
             error.statusCode = 500;
         }
