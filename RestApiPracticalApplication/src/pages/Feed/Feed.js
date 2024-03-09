@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from 'react';
+import { socket } from '../../socket';
 
 import Post from '../../components/Feed/Post/Post';
 import Button from '../../components/Button/Button';
@@ -39,6 +40,25 @@ class Feed extends Component {
             .catch(this.catchError);
 
         this.loadPosts();
+        socket.on('connect', () => {
+            'connected';
+        });
+    }
+
+    addPost(post) {
+        this.setState((prevState) => {
+            const updatedPosts = [...prevState.posts];
+            if (prevState.postPage === 1) {
+                if (prevState.posts.length >= 2) {
+                    updatedPosts.pop();
+                }
+                updatedPosts.unshift(post);
+            }
+            return {
+                posts: updatedPosts,
+                totalPosts: prevState.totalPosts + 1
+            };
+        });
     }
 
     loadPosts = (direction) => {
@@ -86,9 +106,9 @@ class Feed extends Component {
             method: 'PUT',
             headers: {
                 Authorization: `Bearer ${this.props.token}`,
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({status: this.state.status})
+            body: JSON.stringify({ status: this.state.status })
         })
             .then((res) => {
                 if (res.status !== 200 && res.status !== 201) {
