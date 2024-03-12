@@ -3,7 +3,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
-const { connect, url: uri } = require('./util/database');
+const { connect: dbConnect, url: uri } = require('./util/database');
 
 //Routes
 const feedRoutes = require('./routes/feed');
@@ -64,8 +64,12 @@ app.use((error, req, res, next) => {
     });
 });
 
-const createMondoDBconnection = async () => {
-    await connect();
-    app.listen(process.env.PORT);
+const createConnections = async () => {
+    await dbConnect();
+    const server = app.listen(process.env.PORT);
+    const io = require('./socket').init(server);
+    io.on('connection', (socket) => {
+        console.log('client is connected to socket.io');
+    });
 };
-createMondoDBconnection();
+createConnections();
