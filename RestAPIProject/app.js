@@ -4,10 +4,9 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { connect: dbConnect, url: uri } = require('./util/database');
-
-//Routes
-const feedRoutes = require('./routes/feed');
-const authRoutes = require('./routes/auth');
+const { createHandler } = require('graphql-http/lib/use/express');
+const graphqlSchema = require('./graphql/schema');
+const graphqlResolver = require('./graphql/resolvers');
 
 const app = express();
 
@@ -49,9 +48,13 @@ app.use((req, res, next) => {
     next();
 });
 
-//Use routes
-app.use('/feed', feedRoutes);
-app.use('/auth', authRoutes);
+app.use(
+    '/graphql',
+    createHandler({
+        schema: graphqlSchema,
+        rootValue: graphqlResolver
+    })
+);
 
 // error middleware
 app.use((error, req, res, next) => {
@@ -66,10 +69,6 @@ app.use((error, req, res, next) => {
 
 const createConnections = async () => {
     await dbConnect();
-    const server = app.listen(process.env.PORT);
-    const io = require('./socket').init(server);
-    io.on('connection', (socket) => {
-        console.log('client is connected to socket.io');
-    });
+    app.listen(process.env.PORT);
 };
 createConnections();
