@@ -1,5 +1,4 @@
 import React, { Component, Fragment } from 'react';
-import { socket } from '../../socket';
 
 import Post from '../../components/Feed/Post/Post';
 import Button from '../../components/Button/Button';
@@ -40,49 +39,6 @@ class Feed extends Component {
             .catch(this.catchError);
 
         this.loadPosts();
-        socket.on('posts', (data) => {
-            console.log('🚀 ~ Feed ~ socket.on ~ data:', data);
-            if (data.action === 'create') {
-                this.addPost(data.post);
-            }
-            if (data.action === 'update') {
-                this.updatePost(data.post);
-            }
-            if (data.action === 'delete') {
-                this.loadPosts();
-            }
-        });
-    }
-
-    addPost(post) {
-        this.setState((prevState) => {
-            const updatedPosts = [...prevState.posts];
-            if (prevState.postPage === 1) {
-                if (prevState.posts.length >= 2) {
-                    updatedPosts.pop();
-                }
-                updatedPosts.unshift(post);
-            }
-            return {
-                posts: updatedPosts,
-                totalPosts: prevState.totalPosts + 1
-            };
-        });
-    }
-
-    updatePost(post) {
-        this.setState((prevState) => {
-            const updatedPosts = [...prevState.posts];
-            const updatedPostIndex = updatedPosts.findIndex(
-                (p) => p._id === post._id
-            );
-            if (updatedPostIndex > -1) {
-                updatedPosts[updatedPostIndex] = post;
-            }
-            return {
-                posts: updatedPosts
-            };
-        });
     }
 
     loadPosts = (direction) => {

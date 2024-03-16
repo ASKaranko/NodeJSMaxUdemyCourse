@@ -52,7 +52,20 @@ app.use(
     '/graphql',
     createHandler({
         schema: graphqlSchema,
-        rootValue: graphqlResolver
+        rootValue: graphqlResolver,
+        formatError(err) {
+            if (!err.originalError) {
+                return err;
+            }
+            const data = err.originalError.data;
+            const message = err.message || 'An error occurred';
+            const status = err.originalError.code || 500;
+            return {
+                message,
+                status,
+                data
+            };
+        }
     })
 );
 
