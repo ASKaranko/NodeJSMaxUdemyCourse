@@ -7,6 +7,7 @@ const { connect: dbConnect, url: uri } = require('./util/database');
 const { createHandler } = require('graphql-http/lib/use/express');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
+// const cors = require('cors');
 
 const app = express();
 
@@ -45,8 +46,14 @@ app.use((req, res, next) => {
         'Access-Control-Allow-Headers',
         'Content-Type, Authorization'
     );
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
     next();
 });
+
+// alternative to set OPTIONS to 200 response
+// app.use(cors());
 
 app.use(
     '/graphql',
