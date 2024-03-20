@@ -7,6 +7,7 @@ const { connect: dbConnect, url: uri } = require('./util/database');
 const { createHandler } = require('graphql-http/lib/use/express');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
+const auth = require('./middleware/auth');
 // const cors = require('cors');
 
 const app = express();
@@ -55,11 +56,16 @@ app.use((req, res, next) => {
 // alternative to set OPTIONS to 200 response
 // app.use(cors());
 
-app.use(
-    '/graphql',
+app.use(auth);
+
+app.use('/graphql', (req, res) =>
     createHandler({
         schema: graphqlSchema,
-        rootValue: graphqlResolver,
+        rootValue: {
+            createUser: args => graphqlResolver.createUser(args, req),
+            login: args => graphqlResolver.login(args, req),
+            createPost: args => graphqlResolver.createPost(args, req),
+        },
         formatError(err) {
             if (!err.originalError) {
                 return err;
@@ -73,7 +79,7 @@ app.use(
                 data
             };
         }
-    })
+    })(req, res)
 );
 
 // error middleware
