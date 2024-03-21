@@ -109,12 +109,36 @@ module.exports = {
         }).save();
 
         user.posts.push(post);
+        await user.save();
 
         return {
             ...post._doc,
             _id: post._id.toString(),
             createdAt: post.createdAt.toISOString(),
             updatedAt: post.updatedAt.toISOString()
+        };
+    },
+    getPosts: async function (args, req) {
+        if (!req.isAuth) {
+            const error = new Error('Not authenticated!');
+            error.code = 401;
+            throw error;
+        }
+
+        const totalPosts = await Post.countDocuments();
+        const posts = await Post.find()
+            .populate('creator')
+            .sort({ createdAt: -1 });
+        return {
+            posts: posts?.map((p) => {
+                return {
+                    ...p._doc,
+                    _id: p._id.toString(),
+                    createdAt: p.createdAt.toISOString(),
+                    updatedAt: p.updatedAt.toISOString()
+                };
+            }),
+            totalPosts
         };
     }
 };

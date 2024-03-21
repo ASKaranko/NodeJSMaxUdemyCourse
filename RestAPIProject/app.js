@@ -65,6 +65,7 @@ app.use('/graphql', (req, res) =>
             createUser: args => graphqlResolver.createUser(args, req),
             login: args => graphqlResolver.login(args, req),
             createPost: args => graphqlResolver.createPost(args, req),
+            posts: args => graphqlResolver.getPosts(args, req),
         },
         formatError(err) {
             if (!err.originalError) {
