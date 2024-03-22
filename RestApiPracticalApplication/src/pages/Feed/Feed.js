@@ -55,17 +55,19 @@ class Feed extends Component {
             this.setState({ postPage: page });
         }
 
+        // page is a number - no need quotes
         const graphqlQuery = {
             query: `
                 {
-                    posts {
+                    posts(page: ${page}) {
                         posts { 
                             _id, 
                             title, 
                             content,
+                            imageUrl,
                             creator { name }, 
                             createdAt 
-                        }, 
+                        },
                         totalPosts
                     }
                 }
@@ -149,32 +151,51 @@ class Feed extends Component {
             editLoading: true
         });
         const formData = new FormData();
-        formData.append('title', postData.title);
-        formData.append('content', postData.content);
         formData.append('image', postData.image);
+        if (this.state.editPost) {
+            formData.append('oldPath', this.state.editPost.imagePath);
+        }
 
-        let graphqlQuery = {
-            query: `
-                mutation {
-                    createPost(postInput: { 
-                        title: "${postData.title}", 
-                        content: "${postData.content}", 
-                        imageUrl: "some url"
-                    }) {
-                        _id, title, content, creator { name }, createdAt, imageUrl
-                    }
-                }
-            `
-        };
-
-        fetch('http://localhost:8080/graphql', {
-            method: 'POST',
+        fetch(`http://localhost:8080/post-image`, {
+            method: 'PUT',
             headers: {
                 Authorization: `Bearer ${this.props.token}`,
-                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(graphqlQuery)
+            body: formData
         })
+            .then((res) => {
+                if (res.status !== 200 && res.status !== 201) {
+                    throw new Error("Can't store an image!");
+                }
+                return res.json();
+            })
+            .then((resData) => {
+                console.log(resData);
+                const imageUrl = resData.filePath;
+
+                let graphqlQuery = {
+                    query: `
+                        mutation {
+                            createPost(postInput: { 
+                                title: "${postData.title}", 
+                                content: "${postData.content}", 
+                                imageUrl: "${imageUrl}"
+                            }) {
+                                _id, title, content, creator { name }, createdAt, imageUrl
+                            }
+                        }
+                    `
+                };
+
+                return fetch('http://localhost:8080/graphql', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${this.props.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(graphqlQuery)
+                });
+            })
             .then((res) => {
                 return res.json();
             })
@@ -192,7 +213,8 @@ class Feed extends Component {
                     title: resData.data.createPost.title,
                     content: resData.data.createPost.content,
                     creator: resData.data.createPost.creator,
-                    createdAt: resData.data.createPost.createdAt
+                    createdAt: resData.data.createPost.createdAt,
+                    imagePath: resData.data.createPost.imageUrl
                 };
                 this.setState((prevState) => {
                     let updatedPosts = [...prevState.posts];
@@ -202,6 +224,7 @@ class Feed extends Component {
                         );
                         updatedPosts[postIndex] = post;
                     } else {
+                        updatedPosts.pop();
                         updatedPosts.unshift(post);
                     }
                     return {

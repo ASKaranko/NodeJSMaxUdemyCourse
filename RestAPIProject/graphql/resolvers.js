@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Post = require('../models/post');
 
+const POSTS_PER_PAGE = 2;
+
 module.exports = {
     createUser: async function ({ userInput }) {
         const errors = [];
@@ -118,17 +120,23 @@ module.exports = {
             updatedAt: post.updatedAt.toISOString()
         };
     },
-    getPosts: async function (args, req) {
+    getPosts: async function ({ page }, req) {
         if (!req.isAuth) {
             const error = new Error('Not authenticated!');
             error.code = 401;
             throw error;
         }
 
+        if (!page) {
+            page = 1;
+        }
+
         const totalPosts = await Post.countDocuments();
         const posts = await Post.find()
             .populate('creator')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * POSTS_PER_PAGE)
+            .limit(POSTS_PER_PAGE);
         return {
             posts: posts?.map((p) => {
                 return {
