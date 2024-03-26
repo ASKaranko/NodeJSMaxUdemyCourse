@@ -63,7 +63,7 @@ app.put('/post-image', (req, res, next) => {
         throw error;
     }
     if (!req.file) {
-        res.status(200).json({ message: 'Mo image provided!' });
+        res.status(200).json({ message: 'No image provided!' });
     }
     if (req.body.oldPath) {
         clearImage(req.body.oldPath);
@@ -81,7 +81,9 @@ app.use('/graphql', (req, res) =>
             createUser: (args) => graphqlResolver.createUser(args, req),
             login: (args) => graphqlResolver.login(args, req),
             createPost: (args) => graphqlResolver.createPost(args, req),
-            posts: (args) => graphqlResolver.getPosts(args, req)
+            posts: (args) => graphqlResolver.getPosts(args, req),
+            post: (args) => graphqlResolver.getPost(args, req),
+            updatePost: (args) => graphqlResolver.updatePost(args, req)
         },
         formatError(err) {
             if (!err.originalError) {
