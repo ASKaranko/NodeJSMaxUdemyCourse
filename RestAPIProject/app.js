@@ -8,7 +8,7 @@ const { createHandler } = require('graphql-http/lib/use/express');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
 const auth = require('./middleware/auth');
-const { unlink } = require('node:fs/promises');
+const { clearImage } = require('./util/file');
 // const cors = require('cors');
 
 const app = express();
@@ -68,7 +68,10 @@ app.put('/post-image', (req, res, next) => {
     if (req.body.oldPath) {
         clearImage(req.body.oldPath);
     }
-    res.status(201).json({ message: 'File Stored.', filePath: req.file.path.replace('\\', '/') });
+    res.status(201).json({
+        message: 'File Stored.',
+        filePath: req.file.path.replace('\\', '/')
+    });
 });
 
 // alternative to set OPTIONS to 200 response
@@ -83,7 +86,10 @@ app.use('/graphql', (req, res) =>
             createPost: (args) => graphqlResolver.createPost(args, req),
             posts: (args) => graphqlResolver.getPosts(args, req),
             post: (args) => graphqlResolver.getPost(args, req),
-            updatePost: (args) => graphqlResolver.updatePost(args, req)
+            updatePost: (args) => graphqlResolver.updatePost(args, req),
+            deletePost: (args) => graphqlResolver.deletePost(args, req),
+            user: (args) => graphqlResolver.getUser(args, req),
+            updateStatus: (args) => graphqlResolver.updateStatus(args, req),
         },
         formatError(err) {
             if (!err.originalError) {
@@ -117,12 +123,3 @@ const createConnections = async () => {
     app.listen(process.env.PORT);
 };
 createConnections();
-
-const clearImage = async (filePath) => {
-    try {
-        filePath = path.join(__dirname, '..', filePath);
-        await unlink(filePath);
-    } catch (error) {
-        console.log('🚀 ~ clearImage ~ error:', error);
-    }
-};
