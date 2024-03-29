@@ -15,19 +15,17 @@ class SinglePost extends Component {
     componentDidMount() {
         const postId = this.props.match.params.postId;
 
-        const graphqlQuery = {
-            query: `
-                {
-                    post(id: "${postId}") {
-                        title, 
-                        content,
-                        imageUrl,
-                        creator { name }, 
-                        createdAt
-                    }
+        const query = `
+            query FetchPost($postId: ID!) {
+                post(id: $postId) {
+                    title, 
+                    content,
+                    imageUrl,
+                    creator { name }, 
+                    createdAt
                 }
-            `
-        };
+            }
+        `;
 
         fetch(`http://localhost:8080/graphql`, {
             method: 'POST',
@@ -35,7 +33,7 @@ class SinglePost extends Component {
                 Authorization: `Bearer ${this.props.token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(graphqlQuery)
+            body: JSON.stringify({ query, variables: { postId } })
         })
             .then((res) => {
                 return res.json();

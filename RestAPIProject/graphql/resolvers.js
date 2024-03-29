@@ -212,7 +212,7 @@ module.exports = {
 
         post.title = postInput.title;
         post.content = postInput.content;
-        if (postInput.imageUrl !== 'undefined') {
+        if (postInput.imageUrl) {
             post.imageUrl = postInput.imageUrl;
         }
         const updatedPost = await post.save();
