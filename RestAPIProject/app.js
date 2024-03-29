@@ -4,10 +4,12 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { connect: dbConnect, url: uri } = require('./util/database');
-
-//Routes
-const feedRoutes = require('./routes/feed');
-const authRoutes = require('./routes/auth');
+const { createHandler } = require('graphql-http/lib/use/express');
+const graphqlSchema = require('./graphql/schema');
+const graphqlResolver = require('./graphql/resolvers');
+const auth = require('./middleware/auth');
+const { clearImage } = require('./util/file');
+// const cors = require('cors');
 
 const app = express();
 
@@ -46,12 +48,64 @@ app.use((req, res, next) => {
         'Access-Control-Allow-Headers',
         'Content-Type, Authorization'
     );
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
     next();
 });
 
-//Use routes
-app.use('/feed', feedRoutes);
-app.use('/auth', authRoutes);
+app.use(auth);
+
+app.put('/post-image', (req, res, next) => {
+    if (!req.isAuth) {
+        const error = new Error('Not authenticated!');
+        error.statusCode = 401;
+        throw error;
+    }
+    if (!req.file) {
+        res.status(200).json({ message: 'No image provided!' });
+    }
+    if (req.body.oldPath) {
+        clearImage(req.body.oldPath);
+    }
+    res.status(201).json({
+        message: 'File Stored.',
+        filePath: req.file.path.replace('\\', '/')
+    });
+});
+
+// alternative to set OPTIONS to 200 response
+// app.use(cors());
+
+app.use('/graphql', (req, res) =>
+    createHandler({
+        schema: graphqlSchema,
+        rootValue: {
+            createUser: (args) => graphqlResolver.createUser(args, req),
+            login: (args) => graphqlResolver.login(args, req),
+            createPost: (args) => graphqlResolver.createPost(args, req),
+            posts: (args) => graphqlResolver.getPosts(args, req),
+            post: (args) => graphqlResolver.getPost(args, req),
+            updatePost: (args) => graphqlResolver.updatePost(args, req),
+            deletePost: (args) => graphqlResolver.deletePost(args, req),
+            user: (args) => graphqlResolver.getUser(args, req),
+            updateStatus: (args) => graphqlResolver.updateStatus(args, req),
+        },
+        formatError(err) {
+            if (!err.originalError) {
+                return err;
+            }
+            const data = err.originalError.data;
+            const message = err.message || 'An error occurred';
+            const status = err.originalError.code || 500;
+            return {
+                message,
+                status,
+                data
+            };
+        }
+    })(req, res)
+);
 
 // error middleware
 app.use((error, req, res, next) => {
@@ -66,10 +120,6 @@ app.use((error, req, res, next) => {
 
 const createConnections = async () => {
     await dbConnect();
-    const server = app.listen(process.env.PORT);
-    const io = require('./socket').init(server);
-    io.on('connection', (socket) => {
-        console.log('client is connected to socket.io');
-    });
+    app.listen(process.env.PORT);
 };
 createConnections();
