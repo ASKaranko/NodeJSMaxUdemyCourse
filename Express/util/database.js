@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
-const url =
-    'mongodb+srv://akaranko:8LwpEIdvMJarQsLM@cluster0.zrmnklw.mongodb.net/shop?retryWrites=true&w=majority';
+const url = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}.mongodb.net/${process.env.MONGO_DATABASE_NAME}?retryWrites=true&w=majority`;
 
 async function connect() {
     try {
