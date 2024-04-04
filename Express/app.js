@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const { createWriteStream } = require('fs');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const mongoDBStore = require('connect-mongodb-session')(session);
@@ -7,6 +8,9 @@ const uid = require('uid-safe');
 const csrf = require('csurf');
 const flash = require('connect-flash');
 const multer = require('multer');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
 
 const { connect, url: uri } = require('./util/database');
 const User = require('./models/user');
@@ -28,7 +32,7 @@ const storage = multer.diskStorage({
         cb(null, 'images');
     },
     filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
         cb(null, uniqueSuffix + '-' + file.originalname);
     }
 });
@@ -48,6 +52,16 @@ app.use(flash());
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
+
+// protection headers
+app.use(helmet());
+// compress css, js and etc in responses
+app.use(compression());
+// logging
+const accessLogStream = createWriteStream(path.join(__dirname, 'access.log'), {
+    flags: 'a'
+});
+app.use(morgan('combined', { stream: accessLogStream }));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(multer({ storage, fileFilter }).single('image'));
