@@ -1,0 +1,4 @@
+node_modules
+.development.env
+csr.pem
+key.pem
