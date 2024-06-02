@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { connect, url: uri } = require('./util/database');
+const cors = require('cors');
 
 //Routes
 const feedRoutes = require('./routes/feed');
@@ -31,6 +32,7 @@ const fileFilter = (req, file, cb) => {
         cb(null, false);
     }
 };
+app.use(cors());
 
 //app.use(bodyParser.urlencoded());
 app.use(bodyParser.json()); // application/json requests
