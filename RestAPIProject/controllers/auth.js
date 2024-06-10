@@ -63,11 +63,13 @@ exports.login = async (req, res, next) => {
             { expiresIn: '1h' }
         );
         res.status(200).json({ token, userId: user._id.toString() });
+        return;
     } catch (error) {
         if (!error.statusCode) {
             error.statusCode = 500;
         }
         next(error);
+        return error;
     }
 };
 
