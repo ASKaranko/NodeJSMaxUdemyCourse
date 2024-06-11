@@ -4,7 +4,7 @@
   "description": "test project for learning rest api with combination of express.js",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha --timeout 5000 -r dotenv/config",
     "start": "nodemon --env-file=.env app.js"
   },
   "author": "Andrei Karanko",
@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "chai": "*",
+    "dotenv": "^16.4.5",
     "mocha": "*",
     "nodemon": "^3.0.3",
     "sinon": "^18.0.0"

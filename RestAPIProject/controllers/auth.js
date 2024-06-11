@@ -87,6 +87,7 @@ exports.getStatus = async (req, res, next) => {
             message: 'Status fetched.',
             status: user.status
         });
+        return res;
     } catch (error) {
         if (!error.statusCode) {
             error.statusCode = 500;
