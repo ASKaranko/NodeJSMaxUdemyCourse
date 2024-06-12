@@ -88,6 +88,7 @@ exports.createPost = async (req, res, next) => {
             post,
             creator: { _id: updatedUser._id, name: updatedUser.name }
         });
+        return updatedUser;
     } catch (error) {
         console.log('🚀 ~ exports.createPost= ~ error:', error);
         if (!error.statusCode) {
