@@ -1,10 +1,11 @@
-const fs = require('fs').promises;
-
-const text = 'This is a test - and it should be stored in a file';
-fs.writeFile('node-message.txt', text)
-    .then(() => {
-        console.log('File written successfully');
-    })
-    .catch((err) => {
-        console.error(err);
-    });
+const { createServer } = require('node:http');
+const hostname = '127.0.0.1';
+const port = 3000;
+const server = createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  res.end('Hello World!');
+});
+server.listen(port, hostname, () => {
+  console.log(`Server running at http://${hostname}:${port}/`);
+});

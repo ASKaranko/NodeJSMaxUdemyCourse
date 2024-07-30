@@ -1,8 +1,9 @@
-const text = 'This is a test - and it should be stored in a file';
+import { Application } from "jsr:@oak/oak/application";
 
-const encoder = new TextEncoder();
-const data = encoder.encode(text);
+const app = new Application();
 
-Deno.writeFile('message.txt', data).then(() => {
-    console.log('File written to ./message.txt');
+app.use((ctx) => {
+  ctx.response.body = "Hello World from Oak!";
 });
+
+await app.listen({ port: 8000 });
